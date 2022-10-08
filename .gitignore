@@ -5,3 +5,4 @@
 *mlflow
 *.pickle
 *.gz
+.DSTORE
