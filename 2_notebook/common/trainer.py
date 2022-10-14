@@ -1,16 +1,28 @@
 # coding: utf-8
 import sys, os
+
 sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポートするための設定
 import numpy as np
 from common.optimizer import *
 
+
 class Trainer:
-    """ニューラルネットの訓練を行うクラス
-    """
-    def __init__(self, network, x_train, t_train, x_test, t_test,
-                 epochs=20, mini_batch_size=100,
-                 optimizer='SGD', optimizer_param={'lr':0.01}, 
-                 evaluate_sample_num_per_epoch=None, verbose=True):
+    """ニューラルネットの訓練を行うクラス"""
+
+    def __init__(
+        self,
+        network,
+        x_train,
+        t_train,
+        x_test,
+        t_test,
+        epochs=20,
+        mini_batch_size=100,
+        optimizer="SGD",
+        optimizer_param={"lr": 0.01},
+        evaluate_sample_num_per_epoch=None,
+        verbose=True,
+    ):
         print("Trainerクラスのインスタンスが無事生成されました")
         self.network = network
         self.verbose = verbose
@@ -23,11 +35,17 @@ class Trainer:
         self.evaluate_sample_num_per_epoch = evaluate_sample_num_per_epoch
 
         # optimizer
-        optimizer_class_dict = {'sgd':SGD, 'momentum':Momentum, 'nesterov':Nesterov,
-                                'adagrad':AdaGrad, 'rmsprop':RMSprop, 'adam':Adam}
+        optimizer_class_dict = {
+            "sgd": SGD,
+            "momentum": Momentum,
+            "nesterov": Nesterov,
+            "adagrad": AdaGrad,
+            "rmsprop": RMSprop,
+            "adam": Adam,
+        }
         self.optimizer = optimizer_class_dict[optimizer.lower()](**optimizer_param)
-        print(f'optimizer:{self.optimizer}')
-        
+        print(f"optimizer:{self.optimizer}")
+
         # 学習に利用するデータ数
         self.train_size = x_train.shape[0]
         # 1エポックにおけるミニバッチの数 （= 1000 / 100 = 10）
@@ -38,10 +56,14 @@ class Trainer:
         self.current_iter = 0
         # 現在のエポック数
         self.current_epoch = 0
-        
-        self.train_loss_list = []; self.test_loss_list = []
-        self.train_acc_list = []; self.test_acc_list = []
-        print(f'総iter数：{self.max_iter} = エポック数：{self.epochs}, ミニバッチ数：{self.iter_per_epoch}')
+
+        self.train_loss_list = []
+        self.test_loss_list = []
+        self.train_acc_list = []
+        self.test_acc_list = []
+        print(
+            f"総iter数：{self.max_iter} = エポック数：{self.epochs}, ミニバッチ数：{self.iter_per_epoch}"
+        )
 
     def train_step(self):
         # ミニバッチ作成（randomを利用）
@@ -66,42 +88,46 @@ class Trainer:
 
         # verbose（詳細）を出力するか否か
         # self.verbose=False
-        if self.verbose: 
-            print(f'進捗：{self.current_iter / self.max_iter:.1%}, 訓練データの誤差：{loss:.3}')
-        
+        if self.verbose:
+            print(f"進捗：{self.current_iter / self.max_iter:.1%}, 訓練データの誤差：{loss:.3}")
+
         # エポックに分割
         if self.current_iter % self.iter_per_epoch == 0:
             self.current_epoch += 1
-            
+
             # 学習データと検証データを設定
             x_train_sample, t_train_sample = self.x_train, self.t_train
             x_test_sample, t_test_sample = self.x_test, self.t_test
-            
+
             # エポックごとのサンプル数を評価する
             if not self.evaluate_sample_num_per_epoch is None:
                 t = self.evaluate_sample_num_per_epoch
                 x_train_sample, t_train_sample = self.x_train[:t], self.t_train[:t]
                 x_test_sample, t_test_sample = self.x_test[:t], self.t_test[:t]
-                
+
             # 訓練データの精度を計算する
             train_acc = self.network.accuracy(x_train_sample, t_train_sample)
             # print("train_acc　計算完了")
             train_loss = self.network.loss(x_train_sample, t_train_sample)
             # print("train_loss　計算完了")
-            
+
             # 検証データの精度を計算する
             test_acc = self.network.accuracy(x_test_sample, t_test_sample)
             # print("test_acc　計算完了")
             test_loss = self.network.loss(x_test_sample, t_test_sample)
             # print("test_loss　計算完了")
-            
+
             # 精度と誤差をリストに記録する
-            self.train_acc_list.append(train_acc); self.test_acc_list.append(test_acc)
-            self.train_loss_list.append(train_loss); self.test_loss_list.append(test_loss)
-            
+            self.train_acc_list.append(train_acc)
+            self.test_acc_list.append(test_acc)
+            self.train_loss_list.append(train_loss)
+            self.test_loss_list.append(test_loss)
+
             # verbose（詳細）を出力するか否か
-            if self.verbose: 
-                print(f'==epoch:{self.current_epoch}, train_acc:{train_acc:.3}, test_acc:{test_acc:.3}==')
+            if self.verbose:
+                print(
+                    f"==epoch:{self.current_epoch}, train_acc:{train_acc:.3}, test_acc:{test_acc:.3}=="
+                )
         self.current_iter += 1
 
     def train(self):
@@ -115,4 +141,3 @@ class Trainer:
         if self.verbose:
             print("=============== Final Test Accuracy ===============")
             print("test acc:" + str(test_acc))
-
